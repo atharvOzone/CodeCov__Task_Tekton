@@ -1,0 +1,10 @@
+apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  name: generate-code-coverage-report-run
+spec:
+  taskRef:
+    name: generate-code-coverage-report
+  params:
+    - name: git-repository
+      value: 

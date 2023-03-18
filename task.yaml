@@ -1,0 +1,39 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: generate-and-upload-to-codecov
+spec:
+  params:
+    - name: git-repository
+      description: The URL of the git git-repository
+    - name: git-revision
+      description: The git branch to checkout
+    - name: codecov-token
+      description: The codecov access codecov-token
+      type: string
+  steps:
+    - name: git-clone
+      image: alpine/git
+      workingDir: /source
+      command:
+        - sh
+        - |
+          git clone $(params.git-repository) . &&
+          git checkout $(params.git-revision)
+    - name: install-dependencies
+      image: node:14-alpine
+      workingDir: /source
+      command:
+        - sh
+        - -c 
+        - npm install --only=dev 
+    - name: generate-code-coverage-report
+      image: node:14-alpine
+      workingDir: /source
+      command:
+        - sh
+        - -c 
+        - |
+          npx istanbul instrument --output ./coverage/coverage.json ./ &&
+          npx istanbul cover ./node_modules/mocha/bin/_mocha --report Icovonly -- -R spec ./test.js &&
+          npx codecov -t $(params.codecov-token)
